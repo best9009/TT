@@ -9,6 +9,13 @@ class User(AbstractUser, BaseModel):
         db_table = 'df_user'
         verbose_name = '用户'
         verbose_name_plural = verbose_name
+class AddressManager(models.Manager):
+    def get_address_defaul(self, user):
+        try:
+            addr = self.get(user=user, is_default=True)
+        except Address.DoesNotExist:
+            addr = None
+        return addr
 
 
 class Address(BaseModel):
@@ -24,3 +31,5 @@ class Address(BaseModel):
         db_table = 'df_address'
         verbose_name = '地址'
         verbose_name_plural = verbose_name
+
+    objects = AddressManager()

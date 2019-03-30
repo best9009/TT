@@ -142,3 +142,6 @@ EMAIL_FROM = '天天生鲜<best0906054231@163.com>'
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+#配置登陆url
+LOGIN_URL = '/user/login'

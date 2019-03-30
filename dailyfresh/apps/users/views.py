@@ -2,13 +2,16 @@
 from django.shortcuts import render, redirect, HttpResponse
 from django.views.generic import View
 import re
-from .models import User
+from users.models import User, Address
+from goods.models import GoodsSKU
 from django.core.urlresolvers import reverse
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from itsdangerous import TimedJSONWebSignatureSerializer as Serialize
 from itsdangerous import SignatureExpired
 from django.conf import settings
 from celery_task.task import celery_task_send_mail
+from util.mixin import MixInClass
+from django_redis import get_redis_connection
 
 class RegisterView(View):
     def get(self, request):
@@ -62,9 +65,10 @@ class Login(View):
         password = request.POST.get('pwd')
         remember = request.POST.get('remember')
         user = authenticate(username=username, password=password)
+        next_url = request.GET.get('next', reverse('goods:index'))
         if user:
             login(request, user)
-            response = redirect(reverse('goods:index'))
+            response = redirect(next_url)
             if remember == 'on':
                 response.set_cookie('username', username)
             else:
@@ -87,6 +91,60 @@ class Active_View(View):
             return redirect(reverse('user:login'))
         except SignatureExpired:
             return HttpResponse('激活过期')
+
+class User_Center(MixInClass, View):
+    def get(self, request):
+        user = request.user
+        addr = Address.objects.get_address_defaul(user)
+        conn = get_redis_connection(alias='default')
+        history_key = 'history_%s'%user.id
+        goods_list = conn.lrange(history_key, 0, 4)
+        goods_li = []
+        for id in goods_list:
+            goods = GoodsSKU.objects.get(id = id)
+            goods_li.append(goods)
+        context = {'page':'user', 'addr':addr, 'goods_li':goods_li}
+        return render(request, 'user_center_info.html', context)
+
+
+
+class User_Order(MixInClass, View):
+    def get(self, request):
+        return render(request, 'user_center_order.html', {'page':'order'})
+
+class User_Site(MixInClass, View):
+    def get(self, request):
+        user = request.user
+        addr = Address.objects.get_address_defaul(user)
+        return render(request, 'user_center_site.html', {'page':'site', 'addr':addr})
+    def post(self, request):
+        receiver = request.POST.get('receiver')
+        phone = request.POST.get('phone')
+        zip_code = request.POST.get('zip_code')
+        addr = request.POST.get('addr')
+        if not all([receiver, phone, addr]):
+            return redirect(reverse('user:site'), {'errmsg':'输入的信息不完整'})
+        if re.match(r'^1[3|4|5|7|8][0-9]{9}$', phone):
+            user = request.user
+            address = Address.objects.get_address_defaul(user)
+            if address:
+                is_default = False
+            else:
+                is_default = True
+            Address.objects.create(receiver = receiver,
+                                   phone = phone,
+                                   zip_code = zip_code,
+                                   is_default = is_default,
+                                   user = user,
+                                   addr = addr)
+            return redirect(reverse('user:site'))
+        else:
+            return redirect(reverse('user:site'), {'errmsg': '手机号输入格式不对'})
+
+class User_Logout(View):
+    def get(self, request):
+        logout(request)
+        return redirect(reverse('user:login'))
 
 
 
