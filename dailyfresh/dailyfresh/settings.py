@@ -42,6 +42,7 @@ INSTALLED_APPS = (
     'orders',
     'cart',
     'tinymce',
+    'haystack',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -145,3 +146,25 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
 
 #配置登陆url
 LOGIN_URL = '/user/login'
+
+#client.conf文件路径
+CLIENT_CONF_DIR = './util/fdfs/client.conf'
+
+#配置文件存储类
+DEFAULT_FILE_STORAGE = 'util.fdfs.fdfs_Image_storage.FDFSImageStorage'
+
+FDFS_SERVER_URL = 'http://127.0.0.1:8888/'
+
+#haystack配置信息
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.whoosh_cn_backend.WhooshEngine',
+        'PATH': os.path.join(BASE_DIR, 'whoosh_index'),
+    }
+}
+
+# 添加此项，当数据库改变时，会自动更新索引，非常方便
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+#指定检索后每页几个
+HAYSTACK_SEARCH_RESULTS_PER_PAGE=1

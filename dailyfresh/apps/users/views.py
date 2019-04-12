@@ -12,6 +12,9 @@ from django.conf import settings
 from celery_task.task import celery_task_send_mail
 from util.mixin import MixInClass
 from django_redis import get_redis_connection
+from fdfs_client.client import Fdfs_client
+from orders.models import OrderGoods, OrderInfo
+from django.core.paginator import Paginator
 
 class RegisterView(View):
     def get(self, request):
@@ -109,8 +112,22 @@ class User_Center(MixInClass, View):
 
 
 class User_Order(MixInClass, View):
-    def get(self, request):
-        return render(request, 'user_center_order.html', {'page':'order'})
+    def get(self, request, page_num):
+        orders = OrderInfo.objects.all()
+
+        for order in orders:
+            skus = OrderGoods.objects.filter(order=order)
+            for sku in skus:
+                amount = sku.count*sku.price
+                sku.amount = amount
+            order.skus = skus
+            order.status_name = OrderInfo.ORDER_STATUS.get(order.order_status)
+        paginator = Paginator(orders, 1)
+        page = paginator.page(int(page_num))
+        return render(request, 'user_center_order.html', {'page':'order',
+                                                          'page':page,
+                                                          'paginator':paginator,
+                                                          'page_num':page_num})
 
 class User_Site(MixInClass, View):
     def get(self, request):

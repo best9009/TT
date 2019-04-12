@@ -1,0 +1,168 @@
+
+{% extends 'base.html' %}
+{% load staticfiles %}
+	<title>{% block tittle %}天天生鲜-商品详情{% endblock tittle%}</title>
+{% block body %}
+	<div class="navbar_con">
+		<div class="navbar clearfix">
+			<div class="subnav_con fl">
+				<h1>全部商品分类</h1>
+				<span></span>
+				<ul class="subnav">
+					{% for type in types %}
+					<li><a href="#" class="fruit">{{ type.name }}</a></li>
+					{% endfor %}
+				</ul>
+			</div>
+			<ul class="navlist fl">
+				<li><a href="">首页</a></li>
+				<li class="interval">|</li>
+				<li><a href="">手机生鲜</a></li>
+				<li class="interval">|</li>
+				<li><a href="">抽奖</a></li>
+			</ul>
+		</div>
+	</div>
+	<div class="breadcrumb">
+		<a href="#">全部分类</a>
+		<span>></span>
+		<a href="#">{{ loc_type.name }}</a>
+		<span>></span>
+		<a href="#">商品详情</a>
+	</div>
+	{% csrf_token %}
+	<div class="goods_detail_con clearfix">
+		<div class="goods_detail_pic fl"><img src="{{ goods_sku.image.url }}"></div>
+
+		<div class="goods_detail_list fr">
+			<h3>{{ goods_sku.name }}</h3>
+			<p>{{ goods_sku.desc }}</p>
+			<div class="prize_bar">
+				<span class="show_pirze">¥<em>{{ goods_sku.price }}</em></span>
+				<span class="show_unit">单  位：{{ goods_sku.unite }}</span>
+			</div>
+			<div class="goods_num clearfix">
+				<div class="num_name fl">数 量：</div>
+				<div class="num_add fl">
+					<input type="text" class="num_show fl" value="1">
+					<a href="javascript:;" class="add fr">+</a>
+					<a href="javascript:;" class="minus fr">-</a>
+				</div> 
+			</div>
+			<div class="total">总价：<em>16.80元</em></div>
+			<div class="operate_btn">
+				<a href="javascript:;" class="buy_btn">立即购买</a>
+				<a href="javascript:;" class="add_cart" id="add_cart" sku_id={{ goods_sku.id }}>加入购物车</a>
+			</div>
+		</div>
+	</div>
+	<div class="main_wrap clearfix">
+		<div class="l_wrap fl clearfix">
+			<div class="new_goods">
+				<h3>新品推荐</h3>
+				<ul>
+					{% for goods in new_goods %}
+					<li>
+						<a href="#"><img src="{{ goods.image.url }}"></a>
+						<h4><a href="#">{{ goods.name }}</a></h4>
+						<div class="prize">￥{{ goods.price }}</div>
+					</li>
+					{% endfor %}
+				</ul>
+			</div>
+		</div>
+
+		<div class="r_wrap fr clearfix">
+			<ul class="detail_tab clearfix">
+				<li class="active">商品介绍</li>
+				<li>评论</li>
+			</ul>
+
+			<div class="tab_content">
+				<dl>
+					<dt>商品详情：</dt>
+					<dd>{{ goods.detail|safe }}</dd>
+				</dl>
+			</div>
+
+		</div>
+	</div>
+{% endblock body %}
+{% block bottom %}
+
+	<div class="add_jump"></div>
+
+	<script type="text/javascript" src="{% static 'js/jquery-1.12.4.min.js' %}"></script>
+	<script type="text/javascript">
+		function update_goods_amount(){
+			price = $('.show_pirze').children('em').text()
+			count = $('.num_show').val()
+			price = parseFloat(price)
+			count = parseInt(count)
+			sum = count*price
+			$('.total').children('em').text(sum+'元')
+		}
+		$('.add').click(function(){
+			count = $('.num_show').val()
+			count = parseInt(count)
+			count++
+			$('.num_show').val(count)
+			update_goods_amount()
+		})
+		$('.minus').click(function(){
+			count = $('.num_show').val()
+			count = parseInt(count)
+			count--
+			if(count<=0){
+				count = 1
+			}
+			$('.num_show').val(count)
+			update_goods_amount()
+		})
+		$('.num_show').blur(function(){
+			count = $('.num_show').val()
+			if(isNaN(count) || count.trim().length==0 || parseInt(count) <=0){
+				count = 1
+			}
+			count = parseInt(count)
+			$('.num_show').val(count)
+			update_goods_amount()
+		})
+		var $add_x = $('#add_cart').offset().top;
+		var $add_y = $('#add_cart').offset().left;
+
+        // 获取show_count div元素左上角的坐标
+		var $to_x = $('#show_count').offset().top;
+		var $to_y = $('#show_count').offset().left;
+
+		$('#add_cart').click(function(){
+			sku_id = $(this).attr('sku_id')
+			count = $('.num_show').val()
+			csrf = $('input[name="csrfmiddlewaretoken"]').val()
+			params = {'sku_id':sku_id,
+					  'count':count,
+					  'csrfmiddlewaretoken':csrf}
+			$.post('/cart/add', params, function(data){
+				res = data.res
+				total_count = data.total_count
+				if(res == 3){
+                    $(".add_jump").css({'left':$add_y+80,'top':$add_x+10,'display':'block'})
+                    $(".add_jump").stop().animate({
+                        'left': $to_y+7,
+                        'top': $to_x+7},
+                        "fast", function() {
+                            $(".add_jump").fadeOut('fast',function(){
+                                // 重新设置用户购物车中商品的条目数
+                                $('#show_count').html(data.total_count);
+                            });
+			        });
+                }
+
+
+			})
+		})
+	</script>
+{% endblock bottom %}
+	
+</body>
+</html>

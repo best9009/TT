@@ -21,4 +21,7 @@ urlpatterns = [
     url(r'^tinymce/', include('tinymce.urls')),
     url(r'^user/', include('users.urls', namespace='user')),
     url(r'^', include('goods.urls', namespace='goods')),
+    url(r'^search', include('haystack.urls')),
+    url(r'^cart/', include('cart.urls', namespace='cart')),
+    url(r'^order/', include('orders.urls', namespace='order'))
 ]

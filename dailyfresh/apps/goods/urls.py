@@ -14,8 +14,11 @@ Including another URLconf
     2. Add a URL to urlpatterns:  url(r'^blog/', include(blog_urls))
 """
 from django.conf.urls import url
-from .views import Index
+from .views import Index, DetailView, ListView
 
 urlpatterns = [
-    url(r'^$', Index.as_view(), name='index')
+    url(r'^index$', Index.as_view(), name='index'),
+    url(r'^detail/(?P<goods_id>\d+)$', DetailView.as_view(), name='detail'),
+    #列表详情传递三个参数 type:商品种类 page对象 sort排序方式/list/1/1?sort=''
+    url(r'^list/(?P<type_id>\d+)/(?P<page_num>\d+)$', ListView.as_view(), name='list'),
 ]
