@@ -1,0 +1,8 @@
+#验证码有效时间
+VERIFY_CODE_MAX_TIME=60*5
+
+#手机验证码有效期
+SMS_CODE_MAX_TIME=60*5
+
+#再次发短信时间
+SMS_MOBILE_MAX_TIME=60
